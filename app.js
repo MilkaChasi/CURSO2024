@@ -5,7 +5,9 @@ const app = express();
 var bodyParser = require('body-parser');
 
 var routes = require('./routes/api');
-
+const Arena = require('bull-arena');
+const Bull = require('bull');
+const { queues } = require('./workers/queue');
 
 app.use(bodyParser.urlencoded({
     extended: false
@@ -27,6 +29,16 @@ app.use((err, req, res, next) => {
 
 });
 
+const arenaConfig = Arena({
+    Bull,
+    queues
+},
+    {
+        basePath: '/arena',
+        disableListen: true
+    });
+
+app.use('', arenaConfig);
 
 app.use('', routes);
 

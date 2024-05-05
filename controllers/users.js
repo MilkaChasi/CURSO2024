@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 
 var Users = require('../models/users');
 
+const { usersJob } = require('../workers/queue');
+
 
 var controller = {
     userList: function (req, res) {
@@ -71,69 +73,13 @@ var controller = {
         console.log(data.Name);
         console.log(data.Edad);
 
-        //Usuario existente
-        Users.findOne({ iduser: data.iduser }) //findOne solo trae un resultado
-            .then(usuarios => {
-                console.log(usuarios);
+        usersJob.add(data);
 
-                if (usuarios) { //Esto valida la respuesta si hay un usuario duplicado
-                    return res.status(400).send({
-                        status: 400,
-                        message: "Usuario ya existente"
-                          
-                    });
-                }
+        return res.status(200).send({
+            status: 200,
+            message: "Usuario Recibido"
 
-                
-                //Crypt de Password
-                const saltRounds = 10;
-                bcrypt.genSalt(saltRounds, function(err, salt) {
-                    bcrypt.hash(data.Password, salt, function(err, hash) {
-                        // Store hash in your password DB.
-
-                        
-                var create_user = new Users();
-                create_user.iduser = data.iduser;
-                create_user.Name = data.Name;
-                create_user.Apellido = data.Apellido;
-                create_user.Password = hash;
-                create_user.Email = data.Email;
-                create_user.Edad = data.Edad;
-                create_user.Grupos = data.Grupos;
-                create_user.Materias = data.Materias;
-
-                create_user.save()
-                    .then((result) => {
-                        return res.status(200).send({
-                            status: 200,
-                            message: "Usuario Almacenado",
-                            data: result
-
-                        });
-
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        return res.status(500).send({
-                            status: 500,
-                            message: "Error detectado usuario no almacenado",
-                        });
-                    });
-
-                    });
-                });
-
-
-
-            })
-            .catch(error => {
-                console.error(error);
-                return res.status(500).send({
-                    status: 500,
-                    message: "Error detectado",
-                });
-            });
-
+        });
 
     },
 
